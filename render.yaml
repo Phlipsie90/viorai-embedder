@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: viorai-embedder
+    name: viorai-firebase-embedder
     env: python
     plan: starter
     buildCommand: ""
     startCommand: uvicorn app:app --host 0.0.0.0 --port 10000
-    envVars: []
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-key.json
