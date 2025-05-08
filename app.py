@@ -1,14 +1,21 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 app = FastAPI()
-model = SentenceTransformer("thenlper/gte-small")
 
-class EmbedRequest(BaseModel):
+# Kleines Modell für wenig RAM
+tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-small-en-v1.5")
+model = AutoModel.from_pretrained("BAAI/bge-small-en-v1.5")
+
+class Request(BaseModel):
     text: str
 
 @app.post("/embed")
-def embed_text(req: EmbedRequest):
-    embedding = model.encode(req.text).tolist()
-    return {"embedding": embedding}
+def embed_text(req: Request):
+    with torch.no_grad():
+        inputs = tokenizer(req.text, return_tensors="pt", padding=True, truncation=True)
+        outputs = model(**inputs)
+        embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+        return {"embedding": embeddings}
